@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import { getTokenFromCookies } from "./administrators";
+import { getAllEmployees } from "./employee";
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL_HTTP;
 const API_KEY = process.env.REACT_APP_API_KEY;
@@ -30,6 +31,14 @@ export const getAllSites = async (includeDeleted = true) => {
 
 export const deleteSite = async (id, setSiteList, siteList) => {
   try {
+    const employees = await getAllEmployees(false);
+
+    const hasActiveEmployees = employees.some(employee => (employee.site.id === id)  && (employee.deletedAt === null));
+
+    if (hasActiveEmployees) {
+      throw new Error("Impossible de supprimer ce site car des employés y sont encore rattachés.");
+    }
+
     const token = getTokenFromCookies();
     const response = await fetch(`${BASE_URL}/sites/${id}`, {
       method: "DELETE",
@@ -48,14 +57,15 @@ export const deleteSite = async (id, setSiteList, siteList) => {
       }
       return site;
     });
+    
     setSiteList(updatedSiteList);
-
     toast.success("Site supprimé avec succès", { position: "bottom-right" });
 
   } catch (error) {
     toast.error(error.message, { position: "bottom-right" });
   }
 };
+
 
 
 export const restoresite = async (id, setSiteList, siteList) => {

@@ -75,6 +75,8 @@ const AdminEmployeeList = ({ isDisplayed, includeDeleted, setEmployeeList, emplo
         setIsOpenedDeletion(false);
     };
 
+
+
     // Filtrage des employés en fonction du `searchTerm`
     const filteredEmployeeList = Array.isArray(employeeList) ? employeeList.filter((employee) => {
         if (!searchTerm || searchTerm.length < 3) return true;

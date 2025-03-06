@@ -14,7 +14,7 @@ const DeleteService = ({ isOpen, onClose, onConfirm }) => {
                 {/* Body */}
                 <div className="p-4 text-center">
                     <p className="text-gray-700">
-                        Voulez-vous vraiment supprimer ce service et les employés qui lui sont attitré ?
+                        Voulez-vous vraiment supprimer ce service ?
                     </p>
                 </div>
 

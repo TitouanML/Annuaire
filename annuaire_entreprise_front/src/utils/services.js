@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import { getTokenFromCookies } from "./administrators";
+import { getAllEmployees } from "./employee";
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL_HTTP;
 const API_KEY = process.env.REACT_APP_API_KEY;
@@ -30,6 +31,15 @@ export const getAllServices = async (includeDeleted = true) => {
 
 export const deleteService = async (id, setServiceList, serviceList) => {
   try {
+    const employees = await getAllEmployees(false); // Récupérer uniquement les employés actifs
+
+    // Vérifier s'il existe un employé actif associé à ce service
+    const hasActiveEmployees = employees.some(employee => (employee.service.id === id) && (employee.deletedAt === null));
+
+    if (hasActiveEmployees) {
+      throw new Error("Impossible de supprimer ce service car des employés y sont encore rattachés.");
+    }
+
     const token = getTokenFromCookies();
     const response = await fetch(`${BASE_URL}/services/${id}`, {
       method: "DELETE",
@@ -48,8 +58,8 @@ export const deleteService = async (id, setServiceList, serviceList) => {
       }
       return service;
     });
-    setServiceList(updatedServiceList);
 
+    setServiceList(updatedServiceList);
     toast.success("Service supprimé avec succès", { position: "bottom-right" });
 
   } catch (error) {

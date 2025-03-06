@@ -1,4 +1,5 @@
 ﻿
+using API_annuaire.API.Employees.Repositories;
 using API_annuaire.API.Sites.DTO;
 using API_annuaire.API.Sites.Extensions;
 using API_annuaire.API.Sites.Models;
@@ -9,10 +10,12 @@ namespace API_annuaire.API.Sites.Services
     public class SiteService : ISiteService
     {
         private readonly ISiteRepository _siteRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
-        public SiteService(ISiteRepository siteRepository)
+        public SiteService(ISiteRepository siteRepository, IEmployeeRepository employeeRepository)
         {
             _siteRepository = siteRepository;
+            _employeeRepository = employeeRepository;
         }
 
         public async Task<ReturnSiteDTO> GetById(int id)
@@ -52,9 +55,9 @@ namespace API_annuaire.API.Sites.Services
         public async Task<ReturnSiteDTO> SoftDeleteAsync(int id)
         {
             Site siteToDelete = await _siteRepository.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
+            if (await _employeeRepository.AnyAsync(e => (e.SiteId == siteToDelete.Id) && (e.DeletedAt == null))) throw new Exception("Cannot delete site as there is employees related to it.");
             siteToDelete.DeletedAt = DateTime.UtcNow;
             await _siteRepository.UpdateAsync(siteToDelete);
-            await _siteRepository.DeleteAllRelatedEmployees(id);
             ReturnSiteDTO returnSite = siteToDelete.MapToReturn();
             return returnSite;
         }

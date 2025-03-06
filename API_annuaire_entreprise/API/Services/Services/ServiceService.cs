@@ -1,4 +1,5 @@
-﻿using API_annuaire.API.Services.DTO;
+﻿using API_annuaire.API.Employees.Repositories;
+using API_annuaire.API.Services.DTO;
 using API_annuaire.API.Services.Extensions;
 using API_annuaire.API.Services.Models;
 using API_annuaire.API.Services.Repositories;
@@ -10,10 +11,12 @@ namespace API_annuaire.API.Services.Services
     public class ServiceService : IServiceService
     {
         private readonly IServiceRepository _serviceRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
-        public ServiceService(IServiceRepository serviceRepository)
+        public ServiceService(IServiceRepository serviceRepository, IEmployeeRepository employeeRepository)
         {
             _serviceRepository = serviceRepository;
+            _employeeRepository = employeeRepository;
         }
 
         public async Task<ReturnServiceDTO> AddAsync(CreateServiceDTO newService)
@@ -46,11 +49,10 @@ namespace API_annuaire.API.Services.Services
 
 
             Service toDeleteService = await _serviceRepository.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
-
+            if (await _employeeRepository.AnyAsync(e => (e.ServiceId == toDeleteService.Id) && (e.DeletedAt == null))) throw new Exception("Cannot delete service as there is employees related to it.");
             toDeleteService.DeletedAt = DateTime.UtcNow;
 
             await _serviceRepository.UpdateAsync(toDeleteService);
-            await _serviceRepository.DeleteAllRelatedEmployees(id);
 
             return toDeleteService.MapToReturn();
         }
@@ -63,7 +65,6 @@ namespace API_annuaire.API.Services.Services
 
             toDeleteService.DeletedAt = null;
             await _serviceRepository.UpdateAsync(toDeleteService);
-            await _serviceRepository.RestoreAllRelatedEmployees(id);
 
             return toDeleteService.MapToReturn();
         }

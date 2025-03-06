@@ -14,7 +14,7 @@ const DeleteSite = ({isOpen, onClose, onConfirm}) => {
                 {/* Body */}
                 <div className="p-4 text-center">
                     <p className="text-gray-700">
-                        Voulez-vous vraiment supprimer ce site et les employés qui lui sont attitré ?
+                        Voulez-vous vraiment supprimer ce site ?
                     </p>
                 </div>
 
