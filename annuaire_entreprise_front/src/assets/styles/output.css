@@ -915,9 +915,6 @@
   .bg-black {
     background-color: var(--color-black);
   }
-  .bg-black\/20 {
-    background-color: color-mix(in oklab, var(--color-black) 20%, transparent);
-  }
   .bg-black\/30 {
     background-color: color-mix(in oklab, var(--color-black) 30%, transparent);
   }
@@ -1173,16 +1170,6 @@
       }
     }
   }
-  .hover\:scale-105 {
-    &:hover {
-      @media (hover: hover) {
-        --tw-scale-x: 105%;
-        --tw-scale-y: 105%;
-        --tw-scale-z: 105%;
-        scale: var(--tw-scale-x) var(--tw-scale-y);
-      }
-    }
-  }
   .hover\:border {
     &:hover {
       @media (hover: hover) {
@@ -1286,13 +1273,6 @@
     &:hover {
       @media (hover: hover) {
         color: var(--color-gray-300);
-      }
-    }
-  }
-  .hover\:text-gray-400 {
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-gray-400);
       }
     }
   }

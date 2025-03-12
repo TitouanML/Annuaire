@@ -144,7 +144,6 @@ export const updateEmployee = async (id, lastName, firstName, email, mobilePhone
     try {
         const token = getTokenFromCookies();
         const employeeData = { lastName, firstName, email, mobilePhone, landlinePhone, siteId, serviceId };
-        console.log(employeeData);
         const response = await fetch(`${BASE_URL}/employees/${id}`, {
             method: "PUT",
             headers: {

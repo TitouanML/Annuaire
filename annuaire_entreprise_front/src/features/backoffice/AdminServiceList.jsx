@@ -14,7 +14,7 @@ const AdminServiceList = ({ isDisplayed, includeDeleted = null, setServiceList, 
   useEffect(() => {
     const fetchService = async () => {
       const services = await getAllServices(includeDeleted);
-      setServiceList(services); // Mise à jour directe du state
+      setServiceList(services); 
     };
     fetchService();
   }, [includeDeleted, setServiceList]);

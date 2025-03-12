@@ -42,7 +42,6 @@ const AdminFilter = ({
       onFilterChange(true);
     }
 
-    console.log(value); // Affiche la valeur sélectionnée
   };
 
 

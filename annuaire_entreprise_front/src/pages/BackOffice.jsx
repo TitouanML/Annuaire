@@ -50,6 +50,7 @@ const BackOffice = () => {
         setEmployeeList={setEmployeeList}
         setAdminList={setAdminList}
         setSiteList={setSiteList}
+        setServiceList={setServiceList}
       />
       <AdminList
         includeDeleted={includeDeleted}
