@@ -41,7 +41,7 @@ public partial class AnnuaireEntrepriseContext : DbContext
                     FirstName = "Administrateur",
                     Email = "administrateur@annuaire.com",
                     Password = PasswordUtils.HashPassword("Annuaire2025.!", out var salt),
-                    Salt = Convert.ToBase64String(salt),
+                    Salt = Convert.ToHexString(salt),
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
