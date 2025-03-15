@@ -5,6 +5,7 @@ using API_annuaire.API.Employees.Models;
 using API_annuaire.API.Services.Models;
 using API_annuaire.API.Sites.Models;
 using Microsoft.EntityFrameworkCore;
+using MonApi.Shared.Utils;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace API_annuaire.Shared.Data;
@@ -27,6 +28,40 @@ public partial class AnnuaireEntrepriseContext : DbContext
     public virtual DbSet<Service> Services { get; set; }
 
     public virtual DbSet<Site> Sites { get; set; }
+
+    public void EnsureAdminExists()
+    {
+        try
+        {
+            if (!Administrators.Any()) // Vérifie s'il y a déjà un administrateur
+            {
+                var admin = new Administrator
+                {
+                    LastName = "Défaut",
+                    FirstName = "Administrateur",
+                    Email = "administrateur@annuaire.com",
+                    Password = PasswordUtils.HashPassword("Annuaire2025.!", out var salt),
+                    Salt = Convert.ToBase64String(salt),
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                Administrators.Add(admin);
+                SaveChanges();
+
+                Console.WriteLine("✅ Administrateur par défaut ajouté !");
+            }
+            else
+            {
+                Console.WriteLine("ℹ️ Un administrateur existe déjà, aucune action nécessaire.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Erreur lors de l'insertion de l'administrateur : {ex.Message}");
+        }
+    }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -1,6 +1,7 @@
 using API_annuaire.API.Middleware;
 using DotNetEnv;
 using API_annuaire.Shared.Extensions;
+using API_annuaire.Shared.Data;
 
 Env.Load();
 
@@ -21,10 +22,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AnnuaireEntrepriseContext>();
+
+    Console.WriteLine(" Vérification de la base de données...");
+
+    dbContext.Database.EnsureCreated(); // S'assure que la base est bien créée
+
+    Console.WriteLine(" Vérification de l'administrateur...");
+    dbContext.EnsureAdminExists(); // Ajoute un admin si nécessaire
+}
+
 // Placez le middleware CORS AVANT le middleware d'API key
 app.UseCors("AllowFrontend");
 
-// Middleware de l'API key
+// Middleware de l'API key  
 app.UseApiKeyMiddleware();
 
 if (app.Environment.IsDevelopment())
