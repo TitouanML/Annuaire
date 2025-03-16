@@ -17,7 +17,7 @@ namespace API_annuaire.API.Administrators.Controllers
             _administratorService = administratorService;
         }
 
-        [AllowAnonymous]
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddAdministrator([FromBody] CreateAdministratorDTO newAdministrator)
         {
