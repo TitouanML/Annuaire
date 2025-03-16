@@ -15,7 +15,6 @@ using API_annuaire.API.Sites.Repositories;
 using API_annuaire.API.Employees.Services;
 using API_annuaire.API.Employees.Repositories;
 
-
 namespace API_annuaire.Shared.Extensions
 {
     public static class DependencyInjectionExtensions
@@ -24,24 +23,25 @@ namespace API_annuaire.Shared.Extensions
         {
             builder.Services.AddControllers();
             builder.Services.AddHttpContextAccessor();
-            builder.AddServices();
-            builder.AddRepositories();
-            builder.AddJWT();
-            builder.AddSwagger();
-            builder.AddEFCoreConfiguration();
+            builder.AddServices(); // Injection des services
+            builder.AddRepositories(); // Injection des repositories
+            builder.AddJWT(); // Configuration de l'authentification JWT
+            builder.AddSwagger(); // Configuration de Swagger
+            builder.AddEFCoreConfiguration(); // Configuration de la base de données
         }
 
         public static void AddServices(this WebApplicationBuilder builder)
         {
+            // Injection des services métiers
             builder.Services.AddScoped<IAdministratorService, AdministratorService>();
             builder.Services.AddScoped<IServiceService, ServiceService>();
             builder.Services.AddScoped<ISiteService, SiteService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-
         }
 
         public static void AddRepositories(this WebApplicationBuilder builder)
         {
+            // Injection des repositories (gestion des accès aux données)
             builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
             builder.Services.AddScoped<ISiteRepository, SiteRepository>();
@@ -50,26 +50,27 @@ namespace API_annuaire.Shared.Extensions
 
         public static void AddJWT(this WebApplicationBuilder builder)
         {
+            // Récupération de la clé secrète JWT depuis les variables d'environnement
             var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ??
                             throw new InvalidOperationException("JWT secret 'JWT_SECRET' not found.");
 
             var key = Encoding.ASCII.GetBytes(jwtSecret);
 
             builder.Services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
                 .AddJwtBearer(options =>
                 {
-                    options.RequireHttpsMetadata = false; // Mettre à true en production
+                    options.RequireHttpsMetadata = false; // Mettre à true en production pour la sécurité
                     options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuer = false, // Configurer selon les besoins
-                        ValidateAudience = false, // Configurer selon les besoins
+                        ValidateIssuer = false, // À activer si l'API a un émetteur spécifique
+                        ValidateAudience = false, // À activer si l'API est utilisée par des clients spécifiques
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key)
+                        IssuerSigningKey = new SymmetricSecurityKey(key) // Utilisation de la clé secrète pour signer les tokens
                     };
                 });
 
@@ -78,6 +79,7 @@ namespace API_annuaire.Shared.Extensions
 
         public static void AddSwagger(this WebApplicationBuilder builder)
         {
+            // Configuration de Swagger pour inclure l'authentification JWT
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -108,10 +110,12 @@ namespace API_annuaire.Shared.Extensions
 
         public static void AddEFCoreConfiguration(this WebApplicationBuilder builder)
         {
+            // Récupération de la chaîne de connexion depuis les variables d'environnement
             var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
                                    ?? throw new InvalidOperationException(
                                        "Connection string 'DATABASE_CONNECTION_STRING' not found.");
 
+            // Configuration du contexte de base de données avec MySQL
             builder.Services.AddDbContext<AnnuaireEntrepriseContext>(options =>
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
         }

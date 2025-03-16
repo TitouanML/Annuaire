@@ -5,9 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API_annuaire.API.Employees.Controller
 {
-
     [ApiController]
-    [Route("employees")]
+    [Route("employees")] // Route de base pour ce contrôleur
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -17,6 +16,7 @@ namespace API_annuaire.API.Employees.Controller
             _employeeService = employeeService;
         }
 
+        // Ajouter un employé (authentification requise)
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddEmployee([FromBody] CreateEmployeeDTO newEmployee)
@@ -25,6 +25,7 @@ namespace API_annuaire.API.Employees.Controller
             return Ok(adding);
         }
 
+        // Mettre à jour un employé (authentification requise)
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEmployee([FromBody] UpdateEmployeeDTO updateEmployee, [FromRoute] int id)
@@ -33,6 +34,7 @@ namespace API_annuaire.API.Employees.Controller
             return Ok(edited);
         }
 
+        // Supprimer un employé (authentification requise)
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> SoftDeleteEmployee([FromRoute] int id)
@@ -41,7 +43,7 @@ namespace API_annuaire.API.Employees.Controller
             return Ok();
         }
 
-
+        // Restaurer un employé supprimé (authentification requise)
         [Authorize]
         [HttpPut("restore/{id}")]
         public async Task<IActionResult> RestoreEmployee([FromRoute] int id)
@@ -50,6 +52,7 @@ namespace API_annuaire.API.Employees.Controller
             return Ok();
         }
 
+        // Récupérer un employé par ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEmployeeById([FromRoute] int id)
         {
@@ -57,12 +60,12 @@ namespace API_annuaire.API.Employees.Controller
             return Ok(found);
         }
 
+        // Récupérer tous les employés, avec filtres optionnels par site ou service
         [HttpGet]
         public async Task<IActionResult> GetAllEmployees([FromQuery] int? siteId, [FromQuery] int? serviceId)
         {
             var employees = await _employeeService.GetAll(siteId, serviceId);
             return Ok(employees);
         }
-
     }
 }

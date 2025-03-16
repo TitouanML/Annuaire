@@ -26,31 +26,40 @@ namespace API_annuaire.API.Employees.Services
             _serviceRepository = serviceRepository;
         }
 
+        // Ajoute un nouvel employé après vérification de son email et de ses relations avec un site et un service
         public async Task<ReturnEmployeeDTO> AddAsync(CreateEmployeeDTO newEmployee)
         {
-            if (await _employeeRepository.AnyAsync(e => e.Email == newEmployee.Email)) throw new Exception("An employee already possess this email");
-            Site foundSite = await _siteRepository.FindAsync(newEmployee.SiteId) ?? throw new KeyNotFoundException("Site does not exist");
+            if (await _employeeRepository.AnyAsync(e => e.Email == newEmployee.Email))
+                throw new Exception("An employee already possesses this email.");
+
+            Site foundSite = await _siteRepository.FindAsync(newEmployee.SiteId)
+                ?? throw new KeyNotFoundException("Site does not exist");
             ReturnSiteDTO relatedSite = foundSite.MapToReturn();
-            Service foundService = await _serviceRepository.FindAsync(newEmployee.ServiceId) ?? throw new KeyNotFoundException("Service does not exist");
+
+            Service foundService = await _serviceRepository.FindAsync(newEmployee.ServiceId)
+                ?? throw new KeyNotFoundException("Service does not exist");
             ReturnServiceDTO relatedService = foundService.MapToReturn();
 
             Employee employeeToAdd = newEmployee.MapToModel();
-
-
-
             Employee addedEmployee = await _employeeRepository.AddAsync(employeeToAdd);
-
-            Employee addedEmployeeDetails = await _employeeRepository.FindAsync(employeeToAdd.Id) ?? throw new KeyNotFoundException("Id not found");
+            Employee addedEmployeeDetails = await _employeeRepository.FindAsync(employeeToAdd.Id)
+                ?? throw new KeyNotFoundException("Id not found");
 
             return addedEmployeeDetails.MapToReturn(relatedSite, relatedService);
         }
 
+        // Met à jour les informations d'un employé existant
         public async Task<ReturnEmployeeDTO> UpdateAsync(UpdateEmployeeDTO updateEmployee, int id)
         {
-            if (!(await _employeeRepository.AnyAsync(e => e.Id == id))) throw new KeyNotFoundException("Id not found");
-            Site foundSite = await _siteRepository.FindAsync(updateEmployee.SiteId) ?? throw new KeyNotFoundException("Site does not exist");
+            if (!(await _employeeRepository.AnyAsync(e => e.Id == id)))
+                throw new KeyNotFoundException("Id not found");
+
+            Site foundSite = await _siteRepository.FindAsync(updateEmployee.SiteId)
+                ?? throw new KeyNotFoundException("Site does not exist");
             ReturnSiteDTO relatedSite = foundSite.MapToReturn();
-            Service foundService = await _serviceRepository.FindAsync(updateEmployee.ServiceId) ?? throw new KeyNotFoundException("Service does not exist");
+
+            Service foundService = await _serviceRepository.FindAsync(updateEmployee.ServiceId)
+                ?? throw new KeyNotFoundException("Service does not exist");
             ReturnServiceDTO relatedService = foundService.MapToReturn();
 
             Employee toUpdateEmployee = updateEmployee.MapToModel();
@@ -60,13 +69,18 @@ namespace API_annuaire.API.Employees.Services
             return toUpdateEmployee.MapToReturn(relatedSite, relatedService);
         }
 
+        // Effectue une suppression logique d'un employé
         public async Task<ReturnEmployeeDTO> SoftDeleteAsync(int id)
         {
+            Employee toDeleteEmployee = await _employeeRepository.FindAsync(id)
+                ?? throw new KeyNotFoundException("Id not found");
 
-            Employee toDeleteEmployee = await _employeeRepository.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
-            Site foundSite = await _siteRepository.FindAsync(toDeleteEmployee.SiteId) ?? throw new KeyNotFoundException("Site does not exist");
+            Site foundSite = await _siteRepository.FindAsync(toDeleteEmployee.SiteId)
+                ?? throw new KeyNotFoundException("Site does not exist");
             ReturnSiteDTO relatedSite = foundSite.MapToReturn();
-            Service foundService = await _serviceRepository.FindAsync(toDeleteEmployee.ServiceId) ?? throw new KeyNotFoundException("Service does not exist");
+
+            Service foundService = await _serviceRepository.FindAsync(toDeleteEmployee.ServiceId)
+                ?? throw new KeyNotFoundException("Service does not exist");
             ReturnServiceDTO relatedService = foundService.MapToReturn();
 
             toDeleteEmployee.DeletedAt = DateTime.UtcNow;
@@ -75,36 +89,47 @@ namespace API_annuaire.API.Employees.Services
             return toDeleteEmployee.MapToReturn(relatedSite, relatedService);
         }
 
+        // Restaure un employé supprimé logiquement
         public async Task<ReturnEmployeeDTO> RestoreAsync(int id)
         {
+            Employee toRestoreEmployee = await _employeeRepository.FindAsync(id)
+                ?? throw new KeyNotFoundException("Id not found");
 
-            Employee toDeleteEmployee = await _employeeRepository.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
-            Site foundSite = await _siteRepository.FindAsync(toDeleteEmployee.SiteId) ?? throw new KeyNotFoundException("Site does not exist");
+            Site foundSite = await _siteRepository.FindAsync(toRestoreEmployee.SiteId)
+                ?? throw new KeyNotFoundException("Site does not exist");
             ReturnSiteDTO relatedSite = foundSite.MapToReturn();
-            Service foundService = await _serviceRepository.FindAsync(toDeleteEmployee.ServiceId) ?? throw new KeyNotFoundException("Service does not exist");
+
+            Service foundService = await _serviceRepository.FindAsync(toRestoreEmployee.ServiceId)
+                ?? throw new KeyNotFoundException("Service does not exist");
             ReturnServiceDTO relatedService = foundService.MapToReturn();
 
-            toDeleteEmployee.DeletedAt = null;
-            await _employeeRepository.UpdateAsync(toDeleteEmployee);
+            toRestoreEmployee.DeletedAt = null;
+            await _employeeRepository.UpdateAsync(toRestoreEmployee);
 
-            return toDeleteEmployee.MapToReturn(relatedSite, relatedService);
+            return toRestoreEmployee.MapToReturn(relatedSite, relatedService);
         }
 
+        // Récupère un employé par son ID
         public async Task<ReturnEmployeeDTO> GetById(int id)
         {
-            Employee foundEmployee = await _employeeRepository.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
-            Site foundSite = await _siteRepository.FindAsync(foundEmployee.SiteId) ?? throw new KeyNotFoundException("Site does not exist");
+            Employee foundEmployee = await _employeeRepository.FindAsync(id)
+                ?? throw new KeyNotFoundException("Id not found");
+
+            Site foundSite = await _siteRepository.FindAsync(foundEmployee.SiteId)
+                ?? throw new KeyNotFoundException("Site does not exist");
             ReturnSiteDTO relatedSite = foundSite.MapToReturn();
-            Service foundService = await _serviceRepository.FindAsync(foundEmployee.ServiceId) ?? throw new KeyNotFoundException("Service does not exist");
+
+            Service foundService = await _serviceRepository.FindAsync(foundEmployee.ServiceId)
+                ?? throw new KeyNotFoundException("Service does not exist");
             ReturnServiceDTO relatedService = foundService.MapToReturn();
 
             return foundEmployee.MapToReturn(relatedSite, relatedService);
         }
 
+        // Récupère tous les employés, avec possibilité de filtrer par site ou service
         public async Task<List<ReturnEmployeeDTO>> GetAll(int? siteId = null, int? serviceId = null)
         {
-            List<ReturnEmployeeDTO> employees = await _employeeRepository.GetAllEmployees(siteId, serviceId);
-            return employees;
+            return await _employeeRepository.GetAllEmployees(siteId, serviceId);
         }
     }
 }

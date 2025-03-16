@@ -20,60 +20,54 @@ namespace API_annuaire.API.Administrators.Services
             _administratorRepositories = administratorRepositories;
         }
 
+        // Ajout d'un administrateur
         public async Task<ReturnAdministratorDTO> AddAsync(CreateAdministratorDTO newAdministrator)
         {
-            // Vérification de l'email existant
             if (await _administratorRepositories.AnyAsync(a => a.Email == newAdministrator.Email))
                 throw new Exception("Email already used");
 
-            // Mapping du DTO vers le modèle d'administrateur
+            // Mapping du DTO vers le modèle
             Administrator administrator = newAdministrator.MapToModel();
 
-            // Hachage du mot de passe avec un nouveau salt
+            // Hachage du mot de passe et stockage du salt
             administrator.Password = PasswordUtils.HashPassword(newAdministrator.Password, out var salt);
-
-            // Conversion du salt en hexadécimal pour stockage dans la base de données
             administrator.Salt = Convert.ToHexString(salt);
 
-            // Ajout de l'administrateur dans la base de données
+            // Ajout de l'administrateur et récupération de ses détails
             Administrator addedAdministrator = await _administratorRepositories.AddAsync(administrator);
-
-            // Récupération des détails de l'administrateur ajouté
             Administrator addedAdministratorDetails = await _administratorRepositories.FindAsync(addedAdministrator.Id)
-                ?? throw new KeyNotFoundException("Id not found");
+                ?? throw new KeyNotFoundException("Administrator ID not found");
 
-            // Mapping du modèle vers un DTO de retour
-            ReturnAdministratorDTO returnedAdministrator = addedAdministratorDetails.MapToReturn();
-            return returnedAdministrator;
+            return addedAdministratorDetails.MapToReturn();
         }
 
-
-
+        // Connexion d'un administrateur et génération d'un token JWT
         public async Task<string> Login(LoginAdministratorDTO loginDTO)
         {
-            // Vérification de l'existence de l'email
+            // Vérification de l'existence de l'administrateur
             Administrator originalAdministrator = await _administratorRepositories.FirstOrDefaultAsync(a => a.Email == loginDTO.Email)
                 ?? throw new Exception("Email not found");
 
-            if(originalAdministrator.DeletedAt != null) throw new Exception("Administrator deleted");
+            if (originalAdministrator.DeletedAt != null)
+                throw new Exception("Administrator account is deleted");
 
             // Vérification du mot de passe
             bool isPasswordValid = PasswordUtils.VerifyPassword(
                 loginDTO.Password,
                 originalAdministrator.Password,
-                Convert.FromHexString(originalAdministrator.Salt) // Utilisation de FromHexString pour récupérer le salt
+                Convert.FromHexString(originalAdministrator.Salt)
             );
 
             if (!isPasswordValid)
-                throw new Exception("Password does not correspond");
+                throw new Exception("Incorrect password");
 
-            // Création des claims
+            // Création des claims pour le token JWT
             List<Claim> claims = new()
-    {
-        new Claim(ClaimTypes.Role, "Administrator"),
-        new Claim("AdministratorID", originalAdministrator.Id.ToString()),
-        new Claim("Email", originalAdministrator.Email)
-    };
+            {
+                new Claim(ClaimTypes.Role, "Administrator"),
+                new Claim("AdministratorID", originalAdministrator.Id.ToString()),
+                new Claim("Email", originalAdministrator.Email)
+            };
 
             // Récupération du secret JWT
             string key = Environment.GetEnvironmentVariable("JWT_SECRET")
@@ -84,9 +78,8 @@ namespace API_annuaire.API.Administrators.Services
                 SecurityAlgorithms.HmacSha256);
 
             // Récupération du temps d'expiration du token
-            int expirationHours = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION"), out int expHours)
-                ? expHours
-                : throw new Exception("Invalid or missing JWT_EXPIRATION value");
+            if (!int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION"), out int expirationHours))
+                throw new Exception("Invalid or missing JWT_EXPIRATION value");
 
             // Création du token JWT
             JwtSecurityToken jwt = new(
@@ -100,55 +93,63 @@ namespace API_annuaire.API.Administrators.Services
             return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
 
+        // Recherche d'un administrateur par ID
         public async Task<ReturnAdministratorDTO> FindById(int id)
         {
-            Administrator foundAdministrator = await _administratorRepositories.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
-            ReturnAdministratorDTO returnedAdministrator = foundAdministrator.MapToReturn();
-            return returnedAdministrator;
+            Administrator foundAdministrator = await _administratorRepositories.FindAsync(id)
+                ?? throw new KeyNotFoundException("Administrator ID not found");
+
+            return foundAdministrator.MapToReturn();
         }
 
+        // Mise à jour des informations d'un administrateur
         public async Task<ReturnAdministratorDTO> UpdateAsync(UpdateAdministratorDTO updateAdministrator, int id)
         {
-            // Charger l'administrateur existant
-            Administrator originalAdministrator = await _administratorRepositories.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
+            Administrator originalAdministrator = await _administratorRepositories.FindAsync(id)
+                ?? throw new KeyNotFoundException("Administrator ID not found");
 
             // Détacher l'entité originale du contexte
             _administratorRepositories.Detach(originalAdministrator);
 
-            // Mapper les données de la mise à jour
+            // Mapper les nouvelles données sans modifier le mot de passe et le salt
             Administrator toUpdateAdministrator = updateAdministrator.MapToModel();
             toUpdateAdministrator.Id = id;
             toUpdateAdministrator.Password = originalAdministrator.Password;
             toUpdateAdministrator.Salt = originalAdministrator.Salt;
 
-            // Mettre à jour l'entité
             await _administratorRepositories.UpdateAsync(toUpdateAdministrator);
 
             return toUpdateAdministrator.MapToReturn();
         }
 
+        // Suppression logique d'un administrateur
         public async Task<ReturnAdministratorDTO> SoftDeleteAsync(int id)
         {
-            Administrator foundAdministrator = await _administratorRepositories.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
+            Administrator foundAdministrator = await _administratorRepositories.FindAsync(id)
+                ?? throw new KeyNotFoundException("Administrator ID not found");
+
             foundAdministrator.DeletedAt = DateTime.UtcNow;
             await _administratorRepositories.UpdateAsync(foundAdministrator);
-            ReturnAdministratorDTO returnAdministratorDTO = foundAdministrator.MapToReturn();
-            return returnAdministratorDTO;
+
+            return foundAdministrator.MapToReturn();
         }
 
+        // Restauration d'un administrateur supprimé
         public async Task<ReturnAdministratorDTO> RestoreAsync(int id)
         {
-            Administrator foundAdministrator = await _administratorRepositories.FindAsync(id) ?? throw new KeyNotFoundException("Id not found");
+            Administrator foundAdministrator = await _administratorRepositories.FindAsync(id)
+                ?? throw new KeyNotFoundException("Administrator ID not found");
+
             foundAdministrator.DeletedAt = null;
             await _administratorRepositories.UpdateAsync(foundAdministrator);
-            ReturnAdministratorDTO returnAdministratorDTO = foundAdministrator.MapToReturn();
-            return returnAdministratorDTO;
+
+            return foundAdministrator.MapToReturn();
         }
 
+        // Récupération de tous les administrateurs (avec option pour inclure les supprimés)
         public async Task<List<ReturnAdministratorDTO>> GetAll(bool includeDeleted = false)
         {
-            List<ReturnAdministratorDTO> administrators = await _administratorRepositories.GetAllAdministrators(includeDeleted);
-            return administrators;
+            return await _administratorRepositories.GetAllAdministrators(includeDeleted);
         }
     }
 }
